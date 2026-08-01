@@ -9,25 +9,27 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #080b12;
-  --surface:   #0f1320;
-  --surface2:  #161c2e;
-  --border:    #1e2540;
-  --border2:   #252d45;
-  --text:      #e2e6f0;
-  --muted:     #4a5275;
-  --dim:       #2a3050;
+  /* Backgrounds */
+  --bg:       #F0F5FA;   /* page */
+  --surface:  #FFFFFF;   /* cards */
+  --surface2: #E3EEF8;   /* header / nav strip */
+  --border:   #D6E4F0;   /* dividers */
 
-  --clear:     #22d68f;
-  --clear-bg:  rgba(34,214,143,0.08);
-  --lift:      #00c4b4;
-  --lift-bg:   rgba(0,196,180,0.10);
-  --mild:      #f0a500;
-  --mild-bg:   rgba(240,165,0,0.10);
-  --moderate:  #e8621a;
-  --moderate-bg: rgba(232,98,26,0.10);
-  --severe:    #e03045;
-  --severe-bg: rgba(224,48,69,0.10);
+  /* Text */
+  --text:     #1A3A52;   /* primary */
+  --text2:    #3D6680;   /* secondary */
+  --muted:    #7A9DB5;   /* hints / labels */
+
+  /* Impact tiers */
+  --clear:        #1A6644;  --clear-bg:    #E8F8F1;
+  --lift:         #1A6644;  --lift-bg:     #E8F8F1;
+  --mild:         #7A5000;  --mild-bg:     #FFF8E6;
+  --moderate:     #7A3000;  --moderate-bg: #FFF1E6;
+  --severe:       #7A1525;  --severe-bg:   #FDEEF0;
+
+  /* Accent */
+  --accent:       #2E7DB5;  /* buttons, live dot */
+  --accent-bg:    #E8F2FA;  /* live badge background */
 }
 
 body {
