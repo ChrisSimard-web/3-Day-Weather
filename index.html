@@ -496,16 +496,16 @@ const LOCATIONS = [
 
 const THRESHOLDS = {
   cold_mild: 35, cold_moderate: 25, cold_severe: 15,
-  heat_mild: 85, heat_severe: 90,
+  heat_mild: 83, heat_moderate: 88, heat_severe: 90,
   precip_mild: 0.05, precip_moderate: 0.15, precip_severe: 0.30,
   snow_mild: 0.005, snow_moderate: 0.02, snow_severe: 0.05,
 };
 
 // Baseline estimates — replace with your regression output
 const IMPACT = {
-  cold:   { mild: 14,  moderate: 23, severe: 29 },
-  heat:   { mild: 4,  moderate: 3, severe: 3 },
-  rain:   { mild: 1,  moderate: 3, severe: 5 },
+  cold:   { mild: 7,  moderate: 12, severe: 20 },
+  heat:   { mild: 4,  moderate: 7, severe: 9 },
+  rain:   { mild: 1,  moderate: 3, severe: 12 },
   snow:   { mild: 7,  moderate: 19, severe: 25 },
 };
 
