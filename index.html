@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clover — 3-Day Weather Outlook</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080b12;
+  --surface:   #0f1320;
+  --surface2:  #161c2e;
+  --border:    #1e2540;
+  --border2:   #252d45;
+  --text:      #e2e6f0;
+  --muted:     #4a5275;
+  --dim:       #2a3050;
+
+  --clear:     #22d68f;
+  --clear-bg:  rgba(34,214,143,0.08);
+  --lift:      #00c4b4;
+  --lift-bg:   rgba(0,196,180,0.10);
+  --mild:      #f0a500;
+  --mild-bg:   rgba(240,165,0,0.10);
+  --moderate:  #e8621a;
+  --moderate-bg: rgba(232,98,26,0.10);
+  --severe:    #e03045;
+  --severe-bg: rgba(224,48,69,0.10);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  padding: 36px 24px 60px;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto 40px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.clover-mark {
+  font-size: 22px;
+  width: 42px; height: 42px;
+  background: var(--clear-bg);
+  border: 1px solid rgba(34,214,143,0.2);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.brand-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pulse-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--clear);
+  letter-spacing: 0.5px;
+}
+
+.pulse {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--clear);
+  animation: blink 2.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity:1; } 50% { opacity:.25; }
+}
+
+.updated {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ── LEGEND ── */
+.legend {
+  max-width: 1100px;
+  margin: 0 auto 28px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.legend-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+
+.legend-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  border: 1px solid transparent;
+}
+
+.chip-lift     { color: var(--lift);     background: var(--lift-bg);     border-color: rgba(0,196,180,.2); }
+.chip-clear    { color: var(--clear);    background: var(--clear-bg);    border-color: rgba(34,214,143,.2); }
+.chip-mild     { color: var(--mild);     background: var(--mild-bg);     border-color: rgba(240,165,0,.2); }
+.chip-moderate { color: var(--moderate); background: var(--moderate-bg); border-color: rgba(232,98,26,.2); }
+.chip-severe   { color: var(--severe);   background: var(--severe-bg);   border-color: rgba(224,48,69,.2); }
+
+/* ── MAIN GRID ── */
+.grid-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: 180px repeat(3, 1fr);
+  gap: 0;
+  min-width: 640px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Day header row */
+.grid-corner {
+  background: var(--surface2);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.corner-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.day-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.day-header:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.day-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.day-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+
+.day-header.today .day-name {
+  color: var(--clear);
+}
+
+.today-pip {
+  display: inline-block;
+  width: 5px; height: 5px;
+  background: var(--clear);
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+  margin-bottom: 1px;
+}
+
+/* Location rows */
+.loc-label {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.loc-label:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+/* last row — no bottom border on label */
+.loc-label.last-row { border-bottom: none; }
+
+.loc-code {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+
+.loc-name {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.loc-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
+/* Forecast cells */
+.fc-cell {
+  padding: 18px 16px;
+  position: relative;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border);
+}
+
+.fc-cell:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+/* last row cells get no bottom border */
+.last-row .fc-cell {
+  border-bottom: none;
+}
+
+/* last row loc-label handled above */
+.fc-cell.tier-lift     { background: var(--lift-bg); }
+.fc-cell.tier-clear    { background: transparent; }
+.fc-cell.tier-mild     { background: var(--mild-bg); }
+.fc-cell.tier-moderate { background: var(--moderate-bg); }
+.fc-cell.tier-severe   { background: var(--severe-bg); }
+
+.fc-cell:hover { filter: brightness(1.3); }
+
+.cell-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cell-icon { font-size: 20px; line-height: 1; }
+
+.cell-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.badge-lift     { color: var(--lift);     background: rgba(0,196,180,.12);    border-color: rgba(0,196,180,.25); }
+.badge-clear    { color: var(--clear);    background: rgba(34,214,143,.1);    border-color: rgba(34,214,143,.2); }
+.badge-mild     { color: var(--mild);     background: rgba(240,165,0,.1);     border-color: rgba(240,165,0,.25); }
+.badge-moderate { color: var(--moderate); background: rgba(232,98,26,.1);     border-color: rgba(232,98,26,.25); }
+.badge-severe   { color: var(--severe);   background: rgba(224,48,69,.1);     border-color: rgba(224,48,69,.25); }
+
+.cell-temps {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+.cell-temp-range {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.cell-condition {
+  font-size: 11px;
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.cell-precip {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.cell-impact {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.impact-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.impact-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+}
+
+.val-lift     { color: var(--lift); }
+.val-clear    { color: var(--muted); }
+.val-mild     { color: var(--mild); }
+.val-moderate { color: var(--moderate); }
+.val-severe   { color: var(--severe); }
+
+/* Shimmer loading */
+.shimmer-cell {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+  height: 100px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── SUMMARY STRIP ── */
+.summary-strip {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sum-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.sum-val {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.sum-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+@media (max-width: 680px) {
+  body { padding: 20px 12px 40px; }
+  .forecast-grid { grid-template-columns: 130px repeat(3, 1fr); min-width: 520px; }
+  .summary-strip { grid-template-columns: 1fr; }
+  .header { margin-bottom: 24px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <div class="clover-mark">🍀</div>
+    <div class="brand-text">
+      <div class="brand-name">Clover Food Lab</div>
+      <div class="brand-sub">3-Day Weather Outlook</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="pulse-wrap">
+      <div class="pulse"></div>
+      LIVE
+    </div>
+    <div class="updated" id="updatedAt">—</div>
+  </div>
+</header>
+
+<div class="legend">
+  <span class="legend-label">IMPACT</span>
+  <span class="legend-chip chip-lift">↑ Sales lift</span>
+  <span class="legend-chip chip-clear">✓ Clear</span>
+  <span class="legend-chip chip-mild">⚠ Mild</span>
+  <span class="legend-chip chip-moderate">▲ Moderate</span>
+  <span class="legend-chip chip-severe">● Severe</span>
+</div>
+
+<div class="grid-wrap">
+  <div class="forecast-grid" id="forecastGrid">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
+<div class="summary-strip" id="summaryStrip">
+  <!-- Injected by JS -->
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const LOCATIONS = [
+  { code: 'HSC', name: 'Harvard Campus',    zip: '02138', lat: 42.3770, lon: -71.1167, indoor: true  },
+  { code: 'PRU', name: 'Prudential Mall',   zip: '02199', lat: 42.3467, lon: -71.0822, indoor: true  },
+  { code: 'HFI', name: 'Kendall / MIT',     zip: '02139', lat: 42.3626, lon: -71.0940, indoor: false },
+  { code: 'FIN', name: 'Financial District',zip: '02110', lat: 42.3573, lon: -71.0523, indoor: false },
+  { code: 'KEE', name: 'Food Hall',         zip: '02142', lat: 42.3682, lon: -71.0815, indoor: true  },
+];
+
+const THRESHOLDS = {
+  cold_mild: 35, cold_moderate: 25, cold_severe: 15,
+  heat_mild: 85, heat_severe: 90,
+  precip_mild: 0.05, precip_moderate: 0.15, precip_severe: 0.30,
+  snow_mild: 0.005, snow_moderate: 0.02, snow_severe: 0.05,
+};
+
+// Baseline estimates — replace with your regression output
+const IMPACT = {
+  cold:   { mild: 6,  moderate: 13, severe: 22 },
+  heat:   { mild: 5,  moderate: 12, severe: 15 },
+  rain:   { mild: 5,  moderate: 10, severe: 14 },
+  snow:   { mild: 7,  moderate: 15, severe: 25 },
+};
+
+// Locations that see a sales LIFT on rain days (from your regression)
+// Positive = lift %, negative = drag % (override global estimate)
+const LOCATION_OVERRIDES = {
+  HSC: { rain: { mild: +5, moderate: +7, severe: +3 } },
+  PRU: { rain: { mild: +4, moderate: +6, severe: +2 } },
+  KEE: { rain: { mild: +3, moderate: +4, severe: +2 } },
+};
+
+// ── WEATHER FETCH ────────────────────────────────────────────────────────────
+async function fetchForecast(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast`
+    + `?latitude=${lat}&longitude=${lon}`
+    + `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,weathercode`
+    + `&temperature_unit=fahrenheit&precipitation_unit=inch`
+    + `&timezone=America%2FNew_York&forecast_days=4`;
+  const r = await fetch(url);
+  const d = await r.json();
+  // Return days 0, 1, 2 (today + next 2 days)
+  return [0, 1, 2].map(i => ({
+    date:    d.daily.time[i],
+    tempMax: d.daily.temperature_2m_max[i],
+    tempMin: d.daily.temperature_2m_min[i],
+    precip:  d.daily.precipitation_sum[i],
+    snow:    d.daily.snowfall_sum[i],
+    code:    d.daily.weathercode[i],
+    tempAvg: (d.daily.temperature_2m_max[i] + d.daily.temperature_2m_min[i]) / 2,
+  }));
+}
+
+// ── CLASSIFY ─────────────────────────────────────────────────────────────────
+function classify(w, indoor, locationCode) {
+  let tier = 'clear', impact = 0;
+  const triggers = [];
+  const rank = { clear: 0, mild: 1, moderate: 2, severe: 3 };
+
+  function up(newTier, newImpact, label) {
+    if (rank[newTier] > rank[tier]) tier = newTier;
+    impact = Math.max(impact, newImpact);
+    triggers.push(label);
+  }
+
+  const t = w.tempAvg, p = w.precip, s = w.snow;
+
+  // Cold
+  if      (t < THRESHOLDS.cold_severe)   up('severe',   IMPACT.cold.severe,   `Extreme cold (${Math.round(t)}°F)`);
+  else if (t < THRESHOLDS.cold_moderate) up('moderate', IMPACT.cold.moderate, `Heavy cold (${Math.round(t)}°F)`);
+  else if (t < THRESHOLDS.cold_mild)     up('mild',     IMPACT.cold.mild,     `Cold (${Math.round(t)}°F)`);
+
+  // Heat
+  if      (t > THRESHOLDS.heat_severe) up('severe', IMPACT.heat.severe, `Extreme heat (${Math.round(t)}°F)`);
+  else if (t > THRESHOLDS.heat_mild)   up('mild',   IMPACT.heat.mild,   `Heat (${Math.round(t)}°F)`);
+
+  // Snow
+  if      (s > THRESHOLDS.snow_severe)   up('severe',   IMPACT.snow.severe,   `Heavy snow (${s.toFixed(2)}")`);
+  else if (s > THRESHOLDS.snow_moderate) up('moderate', IMPACT.snow.moderate, `Snow (${s.toFixed(2)}")`);
+  else if (s > THRESHOLDS.snow_mild)     up('mild',     IMPACT.snow.mild,     `Flurries`);
+
+  // Rain (non-snow days)
+  const rain = s < 0.01 ? p : Math.max(0, p - s);
+  if (s < 0.01) {
+    if      (rain > THRESHOLDS.precip_severe)   up('moderate', IMPACT.rain.severe,   `Heavy rain (${rain.toFixed(2)}")`);
+    else if (rain > THRESHOLDS.precip_moderate) up('mild',     IMPACT.rain.moderate, `Rain (${rain.toFixed(2)}")`);
+    else if (rain > THRESHOLDS.precip_mild)     up('mild',     IMPACT.rain.mild,     `Light rain`);
+  }
+
+  // Location-level rain override (lift locations)
+  const overrides = LOCATION_OVERRIDES[locationCode] || {};
+  let isLift = false;
+  if (overrides.rain && (rain > THRESHOLDS.precip_mild || s < 0.01)) {
+    const rainTier = rain > THRESHOLDS.precip_severe ? 'severe'
+                   : rain > THRESHOLDS.precip_moderate ? 'moderate' : 'mild';
+    const overrideVal = overrides.rain[rainTier];
+    if (overrideVal !== undefined && overrideVal > 0 && s < 0.01 && rain > THRESHOLDS.precip_mild) {
+      impact = overrideVal;
+      tier = 'lift';
+      isLift = true;
+      triggers.push(`Rain lift expected`);
+    }
+  }
+
+  // Indoor dampening (non-lift, non-snow locations)
+  if (indoor && !isLift && tier !== 'clear') {
+    impact = Math.round(impact * 0.5);
+    if (tier === 'severe') tier = 'moderate';
+    triggers.push('Indoor — reduced impact');
+  }
+
+  return { tier, impact, isLift, triggers };
+}
+
+// ── WX ICON + LABEL ──────────────────────────────────────────────────────────
+function wxMeta(code, snow, precip) {
+  if (snow > 0.05)  return { icon: '❄️', label: 'Heavy Snow' };
+  if (snow > 0.01)  return { icon: '🌨', label: 'Snow' };
+  if (snow > 0)     return { icon: '🌨', label: 'Flurries' };
+  if (code >= 95)   return { icon: '⛈', label: 'Thunderstorm' };
+  if (code >= 80)   return { icon: '🌧', label: 'Showers' };
+  if (code >= 61)   return { icon: '🌧', label: 'Rain' };
+  if (code >= 51)   return { icon: '🌦', label: 'Drizzle' };
+  if (code >= 45)   return { icon: '🌫', label: 'Foggy' };
+  if (code >= 3)    return { icon: '☁️', label: 'Overcast' };
+  if (code >= 2)    return { icon: '⛅', label: 'Partly Cloudy' };
+  if (code >= 1)    return { icon: '🌤', label: 'Mostly Clear' };
+  return { icon: '☀️', label: 'Clear' };
+}
+
+function dayLabel(dateStr, idx) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.toLocaleDateString('en-US', { weekday: 'long' });
+  const md  = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (idx === 0) return { primary: 'Today', secondary: md, today: true };
+  if (idx === 1) return { primary: 'Tomorrow', secondary: md, today: false };
+  return { primary: dow, secondary: md, today: false };
+}
+
+const BADGE = {
+  lift:     { cls: 'badge-lift',     label: '↑ LIFT' },
+  clear:    { cls: 'badge-clear',    label: '✓ CLEAR' },
+  mild:     { cls: 'badge-mild',     label: '⚠ MILD' },
+  moderate: { cls: 'badge-moderate', label: '▲ MOD' },
+  severe:   { cls: 'badge-severe',   label: '● SEV' },
+};
+
+const VAL_CLS = {
+  lift: 'val-lift', clear: 'val-clear',
+  mild: 'val-mild', moderate: 'val-moderate', severe: 'val-severe',
+};
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function buildGrid(allData) {
+  // allData: array of { loc, days: [{weather, classification}] }
+  // Grid: corner | day0 | day1 | day2
+  //       loc0   | cell | cell | cell
+  //       ...
+
+  // Determine 3 day headers from first location's data
+  const dayMetas = allData[0].days.map((d, i) => dayLabel(d.weather.date, i));
+
+  let html = '';
+
+  // Corner
+  html += `<div class="grid-corner"><span class="corner-label">LOCATION</span></div>`;
+
+  // Day headers
+  dayMetas.forEach(dm => {
+    html += `
+      <div class="day-header${dm.today ? ' today' : ''}">
+        <div class="day-name">${dm.primary}${dm.today ? '<span class="today-pip"></span>' : ''}</div>
+        <div class="day-date">${dm.secondary}</div>
+      </div>`;
+  });
+
+  // Location rows
+  allData.forEach((row, ri) => {
+    const isLast = ri === allData.length - 1;
+    const lastCls = isLast ? ' last-row' : '';
+
+    // Location label cell
+    html += `
+      <div class="loc-label${lastCls}">
+        <div class="loc-code">${row.loc.code}</div>
+        <div class="loc-name">${row.loc.name}</div>
+        <div class="loc-type">${row.loc.indoor ? '🏢 Indoor' : '🌿 Outdoor'}</div>
+      </div>`;
+
+    // Forecast cells
+    row.days.forEach((day, di) => {
+      const { weather: w, classification: cl } = day;
+      const wx = wxMeta(w.code, w.snow, w.precip);
+      const b  = BADGE[cl.tier];
+      const vc = VAL_CLS[cl.tier];
+      const impactStr = cl.tier === 'clear' ? '—'
+        : cl.isLift ? `+${cl.impact}%`
+        : `-${cl.impact}%`;
+      const precipStr = w.snow > 0.01
+        ? `${w.snow.toFixed(2)}" snow`
+        : w.precip > 0.05
+        ? `${w.precip.toFixed(2)}" rain`
+        : 'Dry';
+      const isLastCol = di === 2;
+
+      html += `
+        <div class="fc-cell tier-${cl.tier}${isLastCol ? '' : ''}">
+          <div class="cell-top">
+            <span class="cell-icon">${wx.icon}</span>
+            <span class="cell-badge ${b.cls}">${b.label}</span>
+          </div>
+          <div class="cell-temps">${Math.round(w.tempAvg)}°F</div>
+          <div class="cell-temp-range">${Math.round(w.tempMin)}° – ${Math.round(w.tempMax)}°</div>
+          <div class="cell-condition">${wx.label}</div>
+          <div class="cell-precip">${precipStr}</div>
+          <div class="cell-impact">
+            <span class="impact-label">SALES EST</span>
+            <span class="impact-val ${vc}">${impactStr}</span>
+          </div>
+        </div>`;
+    });
+  });
+
+  document.getElementById('forecastGrid').innerHTML = html;
+}
+
+function buildSummary(allData) {
+  // Across all 15 cells, find worst day, most affected location, total alerts
+  let alertCount = 0, worstImpact = 0, worstName = '', worstDay = '';
+  let liftCount = 0;
+
+  allData.forEach(row => {
+    row.days.forEach((day, di) => {
+      const cl = day.classification;
+      if (cl.tier === 'lift') { liftCount++; }
+      else if (cl.tier !== 'clear') {
+        alertCount++;
+        if (cl.impact > worstImpact) {
+          worstImpact = cl.impact;
+          worstName = row.loc.code;
+          worstDay = dayLabel(day.weather.date, di).primary;
+        }
+      }
+    });
+  });
+
+  const alertColor = alertCount === 0 ? 'var(--clear)'
+    : worstImpact > 15 ? 'var(--severe)'
+    : worstImpact > 8  ? 'var(--moderate)'
+    : 'var(--mild)';
+
+  document.getElementById('summaryStrip').innerHTML = `
+    <div class="summary-card">
+      <div class="sum-label">Active Alerts (3-day)</div>
+      <div class="sum-val" style="color:${alertColor}">${alertCount}</div>
+      <div class="sum-sub">${alertCount === 0 ? 'All clear across all locations' : `across ${LOCATIONS.length} locations`}</div>
+    </div>
+    <div class="summary-card">
+      <div class="sum-label">Worst Projected Impact</div>
+      <div class="sum-val" style="color:var(--severe)">${worstImpact > 0 ? `-${worstImpact}%` : '—'}</div>
+      <div class="sum-sub">${worstImpact > 0 ? `${worstName} · ${worstDay}` : 'No significant impact forecast'}</div>
+    </div>
+    <div class="summary-card">
+      <div class="sum-label">Locations with Rain Lift</div>
+      <div class="sum-val" style="color:var(--lift)">${liftCount}</div>
+      <div class="sum-sub">${liftCount > 0 ? 'Indoor locations benefit from rain' : 'No lift opportunities this period'}</div>
+    </div>`;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  // Show shimmer
+  let shimHtml = `<div class="grid-corner"></div>`;
+  ['Today','Tomorrow','Day 3'].forEach(d => {
+    shimHtml += `<div class="day-header"><div class="day-name">${d}</div></div>`;
+  });
+  LOCATIONS.forEach((loc, ri) => {
+    const isLast = ri === LOCATIONS.length - 1;
+    shimHtml += `<div class="loc-label${isLast ? ' last-row' : ''}">
+      <div class="loc-code">${loc.code}</div>
+    </div>`;
+    [0,1,2].forEach(() => {
+      shimHtml += `<div class="fc-cell tier-clear"><div class="shimmer-cell"></div></div>`;
+    });
+  });
+  document.getElementById('forecastGrid').innerHTML = shimHtml;
+
+  // Fetch all locations in parallel
+  const allData = await Promise.all(
+    LOCATIONS.map(async loc => {
+      const forecast = await fetchForecast(loc.lat, loc.lon);
+      return {
+        loc,
+        days: forecast.map(w => ({
+          weather: w,
+          classification: classify(w, loc.indoor, loc.code),
+        })),
+      };
+    })
+  );
+
+  buildGrid(allData);
+  buildSummary(allData);
+
+  document.getElementById('updatedAt').textContent =
+    'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+init();
+</script>
+</body>
+</html>
