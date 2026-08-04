@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clover — 3-Day Weather Outlook</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #F0F5FA;
+  --surface:      #FFFFFF;
+  --surface2:     #E3EEF8;
+  --border:       #D6E4F0;
+  --border2:      #C2D8EE;
+  --text:         #1A3A52;
+  --text2:        #3D6680;
+  --muted:        #7A9DB5;
+
+  --clear:        #1A6644;  --clear-bg:    #E8F8F1;  --clear-border: #A8DEC4;
+  --lift:         #0D7A70;  --lift-bg:     #E0F5F3;  --lift-border:  #80D0CA;
+  --mild:         #7A5000;  --mild-bg:     #FFF8E6;  --mild-border:  #F5D98A;
+  --moderate:     #7A3000;  --moderate-bg: #FFF1E6;  --moderate-border: #F5C09A;
+  --severe:       #7A1525;  --severe-bg:   #FDEEF0;  --severe-border: #F0AABA;
+
+  --accent:       #2E7DB5;
+  --accent-bg:    #E8F2FA;
+  --accent-border:#B0D0E8;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  padding: 32px 20px 56px;
+}
+
+/* ── HEADER ── */
+.header {
+  max-width: 1060px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.clover-mark {
+  width: 40px; height: 40px;
+  background: var(--clear-bg);
+  border: 1px solid var(--clear-border);
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 20px;
+}
+
+.brand-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.brand-sub  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.6px; margin-top: 2px; }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.live-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.4px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2.2s ease-in-out infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.updated { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+
+/* ── SEASONAL BANNER ── */
+.seasonal-banner {
+  max-width: 1060px;
+  margin: 0 auto 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.season-icon { font-size: 16px; }
+.season-label { font-weight: 500; }
+.season-label.high     { color: var(--clear); }
+.season-label.normal   { color: var(--text2); }
+.season-label.low      { color: var(--mild); }
+.season-detail { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-left: 4px; }
+
+/* ── LEGEND ── */
+.legend {
+  max-width: 1060px;
+  margin: 0 auto 20px;
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+}
+
+.legend-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.4px; margin-right: 2px; }
+
+.chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  border: 1px solid transparent;
+}
+.chip-lift     { color: var(--lift);     background: var(--lift-bg);     border-color: var(--lift-border); }
+.chip-clear    { color: var(--clear);    background: var(--clear-bg);    border-color: var(--clear-border); }
+.chip-mild     { color: var(--mild);     background: var(--mild-bg);     border-color: var(--mild-border); }
+.chip-moderate { color: var(--moderate); background: var(--moderate-bg); border-color: var(--moderate-border); }
+.chip-severe   { color: var(--severe);   background: var(--severe-bg);   border-color: var(--severe-border); }
+
+/* ── GRID ── */
+.grid-wrap { max-width: 1060px; margin: 0 auto; overflow-x: auto; }
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: 170px repeat(3, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  min-width: 600px;
+  background: var(--surface);
+  box-shadow: 0 2px 12px rgba(26,58,82,0.06);
+}
+
+/* Corner */
+.grid-corner {
+  background: var(--surface2);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex; align-items: flex-end;
+}
+.corner-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; }
+
+/* Day headers */
+.day-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 14px 16px;
+  text-align: center;
+}
+.day-header:last-child { border-right: none; }
+
+.day-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.day-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+.day-header.today .day-name { color: var(--accent); }
+.today-dot {
+  display: inline-block; width: 5px; height: 5px;
+  background: var(--accent); border-radius: 50%;
+  margin-left: 5px; vertical-align: middle; margin-bottom: 1px;
+}
+
+/* Location label */
+.loc-label {
+  background: var(--surface2);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 18px;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+}
+.loc-label.last { border-bottom: none; }
+
+.loc-code { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+.loc-name { font-size: 11px; color: var(--text2); }
+.loc-type { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+/* Forecast cells */
+.fc-cell {
+  padding: 16px 14px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: filter 0.15s;
+}
+.fc-cell:last-child  { border-right: none; }
+.last .fc-cell       { border-bottom: none; }
+.fc-cell:hover       { filter: brightness(0.97); }
+
+.fc-cell.tier-lift     { background: var(--lift-bg); }
+.fc-cell.tier-clear    { background: var(--surface); }
+.fc-cell.tier-mild     { background: var(--mild-bg); }
+.fc-cell.tier-moderate { background: var(--moderate-bg); }
+.fc-cell.tier-severe   { background: var(--severe-bg); }
+
+.cell-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 10px;
+}
+
+.cell-icon { font-size: 20px; line-height: 1; }
+
+.cell-badge {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 0.3px; padding: 2px 8px;
+  border-radius: 10px; border: 1px solid transparent; white-space: nowrap;
+}
+.badge-lift     { color: var(--lift);     background: var(--lift-bg);     border-color: var(--lift-border); }
+.badge-clear    { color: var(--clear);    background: var(--clear-bg);    border-color: var(--clear-border); }
+.badge-mild     { color: var(--mild);     background: var(--mild-bg);     border-color: var(--mild-border); }
+.badge-moderate { color: var(--moderate); background: var(--moderate-bg); border-color: var(--moderate-border); }
+.badge-severe   { color: var(--severe);   background: var(--severe-bg);   border-color: var(--severe-border); }
+
+.cell-temp { font-family: 'DM Mono', monospace; font-size: 17px; font-weight: 500; color: var(--text); line-height: 1; }
+.cell-range { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; margin-bottom: 6px; }
+.cell-cond  { font-size: 11px; font-weight: 500; color: var(--text2); }
+.cell-precip { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* Timing pill */
+.timing-pill {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  padding: 2px 7px; border-radius: 8px;
+  margin-top: 5px; border: 1px solid transparent;
+}
+.timing-lunch-heavy { color: var(--mild); background: var(--mild-bg); border-color: var(--mild-border); }
+.timing-lunch-light { color: var(--text2); background: var(--surface2); border-color: var(--border2); }
+.timing-off-peak    { color: var(--muted); background: var(--surface2); border-color: var(--border); }
+
+/* Impact row */
+.cell-impact {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.impact-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; }
+.impact-val   { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
+
+.val-lift     { color: var(--lift); }
+.val-clear    { color: var(--muted); }
+.val-mild     { color: var(--mild); }
+.val-moderate { color: var(--moderate); }
+.val-severe   { color: var(--severe); }
+
+/* ── SUMMARY STRIP ── */
+.summary-strip {
+  max-width: 1060px;
+  margin: 16px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.sum-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.sum-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 4px; }
+.sum-val   { font-size: 22px; font-weight: 600; line-height: 1.1; color: var(--text); }
+.sum-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* Shimmer */
+.shimmer {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px; height: 110px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+@media (max-width: 680px) {
+  body { padding: 16px 10px 40px; }
+  .forecast-grid { grid-template-columns: 120px repeat(3, 1fr); min-width: 500px; }
+  .summary-strip { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <div class="clover-mark">🍀</div>
+    <div>
+      <div class="brand-name">Clover Food Lab</div>
+      <div class="brand-sub">3-DAY WEATHER OUTLOOK</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div class="updated" id="updatedAt">—</div>
+  </div>
+</header>
+
+<div class="seasonal-banner" id="seasonalBanner">
+  <span class="season-icon">→</span>
+  <span class="season-label" id="seasonLabel">Loading seasonal context...</span>
+  <span class="season-detail" id="seasonDetail"></span>
+</div>
+
+<div class="legend">
+  <span class="legend-label">IMPACT</span>
+  <span class="chip chip-lift">↑ Sales lift</span>
+  <span class="chip chip-clear">✓ Clear</span>
+  <span class="chip chip-mild">⚠ Mild</span>
+  <span class="chip chip-moderate">▲ Moderate</span>
+  <span class="chip chip-severe">● Severe</span>
+</div>
+
+<div class="grid-wrap">
+  <div class="forecast-grid" id="forecastGrid"></div>
+</div>
+
+<div class="summary-strip" id="summaryStrip"></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const LOCATIONS = [
+  { code:'HSC', name:'Harvard Campus',     zip:'02138', lat:42.3770, lon:-71.1167, indoor:true  },
+  { code:'PRU', name:'Prudential Mall',    zip:'02199', lat:42.3467, lon:-71.0822, indoor:true  },
+  { code:'HFI', name:'Kendall / MIT',      zip:'02139', lat:42.3626, lon:-71.0940, indoor:false },
+  { code:'FIN', name:'Financial District', zip:'02110', lat:42.3573, lon:-71.0523, indoor:false },
+  { code:'KEE', name:'Food Hall',          zip:'02142', lat:42.3682, lon:-71.0815, indoor:true  },
+];
+
+const THR = {
+  cold_mild:0.35e2, cold_moderate:25, cold_severe:15,
+  heat_mild:85, heat_severe:90,
+  precip_mild:0.05, precip_moderate:0.15, precip_severe:0.30,
+  snow_mild:0.005, snow_moderate:0.02, snow_severe:0.05,
+  lunch_heavy:0.10, lunch_light:0.02,
+};
+
+// Update these from weather_impact_report.txt after running analyze_weather_sales.py
+const IMPACT = {
+  cold: { mild:6,  moderate:13, severe:22 },
+  heat: { mild:5,  moderate:12, severe:15 },
+  rain: { mild:5,  moderate:10, severe:14 },
+  snow: { mild:7,  moderate:15, severe:25 },
+};
+
+const TIMING_MULT = {
+  lunch_heavy: 1.5,
+  lunch_light: 1.2,
+  off_peak:    0.6,
+  dry:         1.0,
+  snow:        1.0,
+};
+
+const LOC_OVERRIDES = {
+  HSC: { rain: { mild:+5, moderate:+7, severe:+3 } },
+  PRU: { rain: { mild:+4, moderate:+6, severe:+2 } },
+  KEE: { rain: { mild:+3, moderate:+4, severe:+2 } },
+};
+
+// Seasonal context — week of year
+const SEASONAL = [
+  { weeks:[1,2,3],         level:'low',    emoji:'📉', label:'Post-holiday slow period' },
+  { weeks:[4,5,6,7],       level:'normal', emoji:'→',  label:'Winter semester' },
+  { weeks:[8,9,10,11,12,13], level:'high', emoji:'📈', label:'Spring busy season' },
+  { weeks:[14,15,16,17],   level:'high',   emoji:'📈', label:'Spring peak' },
+  { weeks:[18,19,20,21],   level:'normal', emoji:'→',  label:'Late spring' },
+  { weeks:[22,23,24,25,26], level:'low',   emoji:'📉', label:'Early summer / exam period' },
+  { weeks:Array.from({length:9},(_,i)=>i+27), level:'low', emoji:'📉', label:'Summer slow — reduced campus traffic' },
+  { weeks:[36,37,38,39],   level:'high',   emoji:'📈', label:'Fall return — busy season' },
+  { weeks:[40,41,42,43],   level:'high',   emoji:'📈', label:'Fall peak' },
+  { weeks:[44,45,46,47],   level:'normal', emoji:'→',  label:'Late fall' },
+  { weeks:[48,49,50,51,52,53], level:'low',emoji:'📉', label:'Holiday / exam period' },
+];
+
+function getWeekOfYear(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getSeasonalContext(date) {
+  const week = getWeekOfYear(date);
+  for (const s of SEASONAL) {
+    if (s.weeks.includes(week)) return { ...s, week };
+  }
+  return { level:'normal', emoji:'→', label:'Typical week', week };
+}
+
+// ── WEATHER FETCH ─────────────────────────────────────────────────────────────
+async function fetchForecast(lat, lon) {
+  // Daily + hourly in one call
+  const url = `https://api.open-meteo.com/v1/forecast`
+    + `?latitude=${lat}&longitude=${lon}`
+    + `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,weathercode`
+    + `&hourly=precipitation`
+    + `&temperature_unit=fahrenheit&precipitation_unit=inch`
+    + `&timezone=America%2FNew_York&forecast_days=3`;
+  const r = await fetch(url);
+  const d = await r.json();
+
+  return [0,1,2].map(dayIdx => {
+    const hourOffset = dayIdx * 24;
+    // Sum lunch-window hours (9–13) for this day
+    const lunchHours = [9,10,11,12,13].map(h => d.hourly.precipitation[hourOffset + h] || 0);
+    const lunchPrecip = lunchHours.reduce((a,b) => a+b, 0);
+
+    return {
+      date:       d.daily.time[dayIdx],
+      tempMax:    d.daily.temperature_2m_max[dayIdx],
+      tempMin:    d.daily.temperature_2m_min[dayIdx],
+      tempAvg:    (d.daily.temperature_2m_max[dayIdx] + d.daily.temperature_2m_min[dayIdx]) / 2,
+      precip:     d.daily.precipitation_sum[dayIdx],
+      snow:       d.daily.snowfall_sum[dayIdx],
+      code:       d.daily.weathercode[dayIdx],
+      lunchPrecip: Math.round(lunchPrecip * 1000) / 1000,
+    };
+  });
+}
+
+// ── CLASSIFY ──────────────────────────────────────────────────────────────────
+function classify(w, indoor, code) {
+  let tier = 'clear', impact = 0, isLift = false;
+  const triggers = [];
+  const rank = { clear:0, mild:1, moderate:2, severe:3 };
+
+  function up(t, imp, label) {
+    if ((rank[t]||0) > (rank[tier]||0)) tier = t;
+    impact = Math.max(impact, imp);
+    triggers.push(label);
+  }
+
+  const t=w.tempAvg, p=w.precip, s=w.snow;
+
+  if      (t < THR.cold_severe)   up('severe',   IMPACT.cold.severe,   `Extreme cold (${Math.round(t)}°F)`);
+  else if (t < THR.cold_moderate) up('moderate', IMPACT.cold.moderate, `Heavy cold (${Math.round(t)}°F)`);
+  else if (t < THR.cold_mild)     up('mild',     IMPACT.cold.mild,     `Cold (${Math.round(t)}°F)`);
+
+  if      (t > THR.heat_severe)   up('severe', IMPACT.heat.severe, `Extreme heat (${Math.round(t)}°F)`);
+  else if (t > THR.heat_mild)     up('mild',   IMPACT.heat.mild,   `Heat (${Math.round(t)}°F)`);
+
+  if      (s > THR.snow_severe)   up('severe',   IMPACT.snow.severe,   `Heavy snow (${s.toFixed(2)}")`);
+  else if (s > THR.snow_moderate) up('moderate', IMPACT.snow.moderate, `Snow (${s.toFixed(2)}")`);
+  else if (s > THR.snow_mild)     up('mild',     IMPACT.snow.mild,     'Flurries');
+
+  const rain = s < THR.snow_mild ? p : Math.max(0, p-s);
+  if (s < THR.snow_mild) {
+    if      (rain > THR.precip_severe)   up('moderate', IMPACT.rain.severe,   `Heavy rain (${rain.toFixed(2)}")`);
+    else if (rain > THR.precip_moderate) up('mild',     IMPACT.rain.moderate, `Rain (${rain.toFixed(2)}")`);
+    else if (rain > THR.precip_mild)     up('mild',     IMPACT.rain.mild,     'Light rain');
+  }
+
+  // Location override (lift)
+  const ov = (LOC_OVERRIDES[code]||{}).rain;
+  if (ov && rain > THR.precip_mild && s < THR.snow_mild) {
+    const rt = rain > THR.precip_severe ? 'severe' : rain > THR.precip_moderate ? 'moderate' : 'mild';
+    const val = ov[rt];
+    if (val != null && val > 0) {
+      impact = val; tier = 'lift'; isLift = true;
+      triggers.push('Rain lift expected');
+    }
+  }
+
+  // Rain timing
+  let timing = 'dry';
+  if (s > THR.snow_mild) {
+    timing = 'snow';
+  } else if (rain > THR.precip_mild) {
+    const lp = w.lunchPrecip || 0;
+    timing = lp >= THR.lunch_heavy ? 'lunch_heavy'
+           : lp >= THR.lunch_light ? 'lunch_light'
+           : 'off_peak';
+  }
+
+  // Apply timing multiplier (non-lift rain days)
+  if (!isLift && s < THR.snow_mild && rain > THR.precip_mild) {
+    const mult = TIMING_MULT[timing] || 1.0;
+    impact = Math.round(impact * mult);
+    if      (timing === 'lunch_heavy') triggers.push('🕙 Lunch window — heavy rain');
+    else if (timing === 'lunch_light') triggers.push('🕙 Lunch window — light rain');
+    else if (timing === 'off_peak')    triggers.push('🕔 Off-peak timing');
+  }
+
+  // Indoor dampening
+  if (indoor && !isLift && tier !== 'clear') {
+    impact = Math.round(impact * 0.5);
+    if (tier === 'severe') tier = 'moderate';
+    triggers.push('Indoor — reduced impact');
+  }
+
+  return { tier, impact, isLift, timing, triggers };
+}
+
+// ── WX ICON ───────────────────────────────────────────────────────────────────
+function wxMeta(code, snow, precip) {
+  if (snow > 0.05) return { icon:'❄️', label:'Heavy Snow' };
+  if (snow > 0.01) return { icon:'🌨', label:'Snow' };
+  if (snow > 0)    return { icon:'🌨', label:'Flurries' };
+  if (code >= 95)  return { icon:'⛈',  label:'Thunderstorm' };
+  if (code >= 80)  return { icon:'🌧', label:'Showers' };
+  if (code >= 61)  return { icon:'🌧', label:'Rain' };
+  if (code >= 51)  return { icon:'🌦', label:'Drizzle' };
+  if (code >= 45)  return { icon:'🌫', label:'Foggy' };
+  if (code >= 3)   return { icon:'☁️', label:'Overcast' };
+  if (code >= 2)   return { icon:'⛅', label:'Partly Cloudy' };
+  if (code >= 1)   return { icon:'🌤', label:'Mostly Clear' };
+  return { icon:'☀️', label:'Clear' };
+}
+
+function dayLabel(dateStr, idx) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.toLocaleDateString('en-US', { weekday:'long' });
+  const md  = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  if (idx===0) return { primary:'Today',    secondary:md, today:true,  date:d };
+  if (idx===1) return { primary:'Tomorrow', secondary:md, today:false, date:d };
+  return { primary:dow, secondary:md, today:false, date:d };
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+const BADGE = {
+  lift:     { cls:'badge-lift',     label:'↑ LIFT' },
+  clear:    { cls:'badge-clear',    label:'✓ CLEAR' },
+  mild:     { cls:'badge-mild',     label:'⚠ MILD' },
+  moderate: { cls:'badge-moderate', label:'▲ MOD' },
+  severe:   { cls:'badge-severe',   label:'● SEV' },
+};
+
+const VAL_CLS = { lift:'val-lift', clear:'val-clear', mild:'val-mild', moderate:'val-moderate', severe:'val-severe' };
+
+function timingPill(timing, lunchPrecip) {
+  if (timing === 'lunch_heavy')
+    return `<div class="timing-pill timing-lunch-heavy">🕙 Lunch rush — ${lunchPrecip.toFixed(2)}"</div>`;
+  if (timing === 'lunch_light')
+    return `<div class="timing-pill timing-lunch-light">🕙 Light lunch rain</div>`;
+  if (timing === 'off_peak')
+    return `<div class="timing-pill timing-off-peak">🕔 After lunch rush</div>`;
+  return '';
+}
+
+function buildGrid(allData) {
+  const dayMetas = allData[0].days.map((d,i) => dayLabel(d.w.date, i));
+  let html = '';
+
+  // Corner + day headers
+  html += `<div class="grid-corner"><span class="corner-label">Location</span></div>`;
+  dayMetas.forEach(dm => {
+    html += `<div class="day-header${dm.today?' today':''}">
+      <div class="day-name">${dm.primary}${dm.today?'<span class="today-dot"></span>':''}</div>
+      <div class="day-date">${dm.secondary}</div>
+    </div>`;
+  });
+
+  // Location rows
+  allData.forEach((row, ri) => {
+    const isLast = ri === allData.length - 1;
+    const lastCls = isLast ? ' last' : '';
+    html += `<div class="loc-label${lastCls}">
+      <div class="loc-code">${row.loc.code}</div>
+      <div class="loc-name">${row.loc.name}</div>
+      <div class="loc-type">${row.loc.indoor ? '🏢 Indoor' : '🌿 Outdoor'}</div>
+    </div>`;
+
+    row.days.forEach(({ w, cl }) => {
+      const wx  = wxMeta(w.code, w.snow, w.precip);
+      const b   = BADGE[cl.tier];
+      const vc  = VAL_CLS[cl.tier];
+      const impStr = cl.tier === 'clear' ? '—' : cl.isLift ? `+${cl.impact}%` : `-${cl.impact}%`;
+      const precipStr = w.snow > 0.01 ? `${w.snow.toFixed(2)}" snow`
+                       : w.precip > 0.05 ? `${w.precip.toFixed(2)}" rain`
+                       : 'Dry';
+      const tPill = (cl.timing !== 'dry' && cl.timing !== 'snow')
+        ? timingPill(cl.timing, w.lunchPrecip || 0) : '';
+
+      html += `<div class="fc-cell tier-${cl.tier}">
+        <div class="cell-top">
+          <span class="cell-icon">${wx.icon}</span>
+          <span class="cell-badge ${b.cls}">${b.label}</span>
+        </div>
+        <div class="cell-temp">${Math.round(w.tempAvg)}°F</div>
+        <div class="cell-range">${Math.round(w.tempMin)}° – ${Math.round(w.tempMax)}°</div>
+        <div class="cell-cond">${wx.label}</div>
+        <div class="cell-precip">${precipStr}</div>
+        ${tPill}
+        <div class="cell-impact">
+          <span class="impact-label">SALES EST</span>
+          <span class="impact-val ${vc}">${impStr}</span>
+        </div>
+      </div>`;
+    });
+  });
+
+  document.getElementById('forecastGrid').innerHTML = html;
+}
+
+function buildSummary(allData) {
+  let alerts=0, lifts=0, worstImpact=0, worstName='', worstDay='';
+  allData.forEach(row => {
+    row.days.forEach(({w,cl},di) => {
+      if (cl.tier === 'lift') lifts++;
+      else if (cl.tier !== 'clear') {
+        alerts++;
+        if (cl.impact > worstImpact) {
+          worstImpact = cl.impact;
+          worstName   = row.loc.code;
+          worstDay    = dayLabel(w.date, di).primary;
+        }
+      }
+    });
+  });
+
+  const alertColor = alerts===0 ? 'var(--clear)'
+    : worstImpact>15 ? 'var(--severe)'
+    : worstImpact>8  ? 'var(--moderate)'
+    : 'var(--mild)';
+
+  document.getElementById('summaryStrip').innerHTML = `
+    <div class="sum-card">
+      <div class="sum-label">Active Alerts (3-day)</div>
+      <div class="sum-val" style="color:${alertColor}">${alerts}</div>
+      <div class="sum-sub">${alerts===0 ? 'All clear across all locations' : `across ${LOCATIONS.length} locations`}</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Worst Projected Impact</div>
+      <div class="sum-val" style="color:var(--severe)">${worstImpact>0 ? `-${worstImpact}%` : '—'}</div>
+      <div class="sum-sub">${worstImpact>0 ? `${worstName} · ${worstDay}` : 'No significant impact forecast'}</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Locations with Rain Lift</div>
+      <div class="sum-val" style="color:var(--lift)">${lifts}</div>
+      <div class="sum-sub">${lifts>0 ? 'Indoor locations benefit from rain' : 'No lift opportunities this period'}</div>
+    </div>`;
+}
+
+function buildSeasonalBanner(allData) {
+  // Use today's date from first day of data
+  const todayStr = allData[0].days[0].w.date;
+  const ctx = getSeasonalContext(new Date(todayStr + 'T12:00:00'));
+  const el = document.getElementById('seasonalBanner');
+  el.querySelector('.season-icon').textContent = ctx.emoji;
+  const lbl = el.querySelector('#seasonLabel');
+  lbl.textContent = ctx.label;
+  lbl.className = `season-label ${ctx.level}`;
+  document.getElementById('seasonDetail').textContent = `Week ${ctx.week} · Volume: ${ctx.level.toUpperCase()}`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  // Shimmer
+  let sh = `<div class="grid-corner"></div>`;
+  ['Today','Tomorrow','Day 3'].forEach(d => {
+    sh += `<div class="day-header"><div class="day-name">${d}</div></div>`;
+  });
+  LOCATIONS.forEach((loc,ri) => {
+    const lastCls = ri===LOCATIONS.length-1 ? ' last' : '';
+    sh += `<div class="loc-label${lastCls}"><div class="loc-code">${loc.code}</div></div>`;
+    [0,1,2].forEach(() => { sh += `<div class="fc-cell tier-clear"><div class="shimmer"></div></div>`; });
+  });
+  document.getElementById('forecastGrid').innerHTML = sh;
+
+  const allData = await Promise.all(
+    LOCATIONS.map(async loc => {
+      const forecast = await fetchForecast(loc.lat, loc.lon);
+      return {
+        loc,
+        days: forecast.map(w => ({ w, cl: classify(w, loc.indoor, loc.code) })),
+      };
+    })
+  );
+
+  buildGrid(allData);
+  buildSummary(allData);
+  buildSeasonalBanner(allData);
+
+  document.getElementById('updatedAt').textContent =
+    'Updated ' + new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+}
+
+init();
+</script>
+</body>
+</html>
